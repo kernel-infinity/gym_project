@@ -125,6 +125,48 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({ navigation }) 
         </Card>
       )}
 
+      {/* Quick Actions */}
+      <View style={styles.quickActionsSection}>
+        <Text style={styles.sectionTitle}>Brzi pristup</Text>
+        <View style={styles.quickActionsGrid}>
+          <TouchableOpacity
+            style={styles.quickActionCard}
+            onPress={() => navigation.navigate('WorkoutCalendar' as any)}
+          >
+            <Text style={styles.quickActionIcon}>📅</Text>
+            <Text style={styles.quickActionTitle}>Kalendar</Text>
+            <Text style={styles.quickActionDescription}>Planiraj treninge</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.quickActionCard}
+            onPress={() => navigation.navigate('MuscleGroups' as any)}
+          >
+            <Text style={styles.quickActionIcon}>💪</Text>
+            <Text style={styles.quickActionTitle}>Mišićne skupine</Text>
+            <Text style={styles.quickActionDescription}>Upravljaj skupinama</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.quickActionCard}
+            onPress={() => navigation.navigate('Exercises' as any)}
+          >
+            <Text style={styles.quickActionIcon}>🏋️</Text>
+            <Text style={styles.quickActionTitle}>Vježbe</Text>
+            <Text style={styles.quickActionDescription}>Pregled vježbi</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.quickActionCard}
+            onPress={() => navigation.navigate('BodyMetrics' as any)}
+          >
+            <Text style={styles.quickActionIcon}>📊</Text>
+            <Text style={styles.quickActionTitle}>Metrike</Text>
+            <Text style={styles.quickActionDescription}>Praćenje napretka</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+
       {/* Recent Workouts */}
       <View style={styles.section}>
         <View style={styles.sectionHeader}>
@@ -307,5 +349,42 @@ const styles = StyleSheet.create({
   workoutDate: {
     fontSize: 12,
     color: '#8E8E93',
+  },
+  quickActionsSection: {
+    paddingHorizontal: 24,
+    paddingBottom: 24,
+  },
+  quickActionsGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 12,
+    marginTop: 16,
+  },
+  quickActionCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
+    padding: 16,
+    width: '48%',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  quickActionIcon: {
+    fontSize: 36,
+    marginBottom: 8,
+  },
+  quickActionTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#1C1C1E',
+    marginBottom: 4,
+  },
+  quickActionDescription: {
+    fontSize: 12,
+    color: '#8E8E93',
+    textAlign: 'center',
   },
 });

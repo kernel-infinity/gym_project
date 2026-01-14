@@ -8,14 +8,23 @@ export interface User {
   height_unit: 'cm' | 'in';
 }
 
+// Muscle Group Types
+export interface MuscleGroup {
+  id: number;
+  name: string;
+  description?: string;
+  color: string;
+}
+
 // Exercise Types
 export interface Exercise {
   id: number;
   name: string;
   description?: string;
-  muscle_group: string;
+  muscle_group_id: number;
   equipment?: string;
   instructions?: string;
+  muscle_group?: MuscleGroup;
 }
 
 // Workout Types
@@ -93,4 +102,7 @@ export type WorkoutStackParamList = {
   WorkoutDetail: { workoutId: number };
   WeeklyGoals: undefined;
   BodyMetrics: undefined;
+  MuscleGroups: undefined;
+  Exercises: undefined;
+  WorkoutCalendar: undefined;
 };

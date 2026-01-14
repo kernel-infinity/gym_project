@@ -17,6 +17,9 @@ import { WorkoutDetailScreen } from '../screens/main/WorkoutDetailScreen';
 import { WeeklyGoalsScreen } from '../screens/main/WeeklyGoalsScreen';
 import { BodyMetricsScreen } from '../screens/main/BodyMetricsScreen';
 import { ProfileScreen } from '../screens/main/ProfileScreen';
+import { MuscleGroupsScreen } from '../screens/main/MuscleGroupsScreen';
+import { ExercisesScreen } from '../screens/main/ExercisesScreen';
+import { WorkoutCalendarScreen } from '../screens/main/WorkoutCalendarScreen';
 import { View, Text, StyleSheet } from 'react-native';
 
 const RootStack = createStackNavigator<RootStackParamList>();
@@ -61,6 +64,21 @@ const WorkoutsNavigator = () => {
         name="BodyMetrics"
         component={BodyMetricsScreen}
         options={{ title: 'Tjelesne metrike' }}
+      />
+      <WorkoutStack.Screen
+        name="MuscleGroups"
+        component={MuscleGroupsScreen}
+        options={{ title: 'Mišićne skupine' }}
+      />
+      <WorkoutStack.Screen
+        name="Exercises"
+        component={ExercisesScreen}
+        options={{ title: 'Vježbe' }}
+      />
+      <WorkoutStack.Screen
+        name="WorkoutCalendar"
+        component={WorkoutCalendarScreen}
+        options={{ title: 'Kalendar treninga' }}
       />
     </WorkoutStack.Navigator>
   );
