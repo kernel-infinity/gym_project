@@ -1,5 +1,5 @@
 import { getDatabase } from './database';
-import { User, Exercise, Workout, WorkoutExercise, ExerciseSet, WeeklyGoal, BodyMetric } from '../types';
+import { User, Exercise, Workout, WorkoutExercise, ExerciseSet, WeeklyGoal, BodyMetric, MuscleGroup } from '../types';
 
 // User Services
 export const createUser = (name: string, email: string, password: string): User | null => {
@@ -33,30 +33,135 @@ export const updateUser = (id: number, updates: Partial<User>): void => {
   db.runSync(`UPDATE users SET ${fields} WHERE id = ?`, values);
 };
 
+// Muscle Group Services
+export const getAllMuscleGroups = (): MuscleGroup[] => {
+  const db = getDatabase();
+  return db.getAllSync<MuscleGroup>('SELECT * FROM muscle_groups ORDER BY name');
+};
+
+export const getMuscleGroupById = (id: number): MuscleGroup | null => {
+  const db = getDatabase();
+  return db.getFirstSync<MuscleGroup>('SELECT * FROM muscle_groups WHERE id = ?', [id]);
+};
+
+export const createMuscleGroup = (muscleGroup: Omit<MuscleGroup, 'id'>): MuscleGroup | null => {
+  const db = getDatabase();
+  try {
+    db.runSync(
+      'INSERT INTO muscle_groups (name, description, color) VALUES (?, ?, ?)',
+      [muscleGroup.name, muscleGroup.description || null, muscleGroup.color]
+    );
+    return db.getFirstSync<MuscleGroup>('SELECT * FROM muscle_groups WHERE id = last_insert_rowid()');
+  } catch (error) {
+    console.error('Error creating muscle group:', error);
+    return null;
+  }
+};
+
+export const updateMuscleGroup = (id: number, updates: Partial<MuscleGroup>): void => {
+  const db = getDatabase();
+  const fields = Object.keys(updates).map(key => `${key} = ?`).join(', ');
+  const values = [...Object.values(updates), id];
+  db.runSync(`UPDATE muscle_groups SET ${fields} WHERE id = ?`, values);
+};
+
+export const deleteMuscleGroup = (id: number): void => {
+  const db = getDatabase();
+  // Check if there are exercises using this muscle group
+  const exercisesCount = db.getFirstSync<{ count: number }>(
+    'SELECT COUNT(*) as count FROM exercises WHERE muscle_group_id = ?',
+    [id]
+  );
+  if (exercisesCount && exercisesCount.count > 0) {
+    throw new Error('Cannot delete muscle group with existing exercises');
+  }
+  db.runSync('DELETE FROM muscle_groups WHERE id = ?', [id]);
+};
+
 // Exercise Services
 export const getAllExercises = (): Exercise[] => {
   const db = getDatabase();
-  return db.getAllSync<Exercise>('SELECT * FROM exercises ORDER BY muscle_group, name');
+  const exercises = db.getAllSync<Exercise>('SELECT * FROM exercises ORDER BY muscle_group_id, name');
+  // Load muscle group details for each exercise
+  return exercises.map(exercise => {
+    const muscleGroup = getMuscleGroupById(exercise.muscle_group_id);
+    return { ...exercise, muscle_group: muscleGroup || undefined };
+  });
+};
+
+export const getExercisesByMuscleGroup = (muscleGroupId: number): Exercise[] => {
+  const db = getDatabase();
+  const exercises = db.getAllSync<Exercise>(
+    'SELECT * FROM exercises WHERE muscle_group_id = ? ORDER BY name',
+    [muscleGroupId]
+  );
+  return exercises.map(exercise => {
+    const muscleGroup = getMuscleGroupById(exercise.muscle_group_id);
+    return { ...exercise, muscle_group: muscleGroup || undefined };
+  });
 };
 
 export const getExerciseById = (id: number): Exercise | null => {
   const db = getDatabase();
-  return db.getFirstSync<Exercise>('SELECT * FROM exercises WHERE id = ?', [id]);
+  const exercise = db.getFirstSync<Exercise>('SELECT * FROM exercises WHERE id = ?', [id]);
+  if (exercise) {
+    const muscleGroup = getMuscleGroupById(exercise.muscle_group_id);
+    return { ...exercise, muscle_group: muscleGroup || undefined };
+  }
+  return null;
 };
 
 export const createExercise = (exercise: Omit<Exercise, 'id'>): Exercise | null => {
   const db = getDatabase();
   db.runSync(
-    'INSERT INTO exercises (name, description, muscle_group, equipment, instructions) VALUES (?, ?, ?, ?, ?)',
-    [exercise.name, exercise.description || null, exercise.muscle_group, exercise.equipment || null, exercise.instructions || null]
+    'INSERT INTO exercises (name, description, muscle_group_id, equipment, instructions) VALUES (?, ?, ?, ?, ?)',
+    [exercise.name, exercise.description || null, exercise.muscle_group_id, exercise.equipment || null, exercise.instructions || null]
   );
   return db.getFirstSync<Exercise>('SELECT * FROM exercises WHERE id = last_insert_rowid()');
+};
+
+export const updateExercise = (id: number, updates: Partial<Exercise>): void => {
+  const db = getDatabase();
+  const fields = Object.keys(updates).map(key => `${key} = ?`).join(', ');
+  const values = [...Object.values(updates), id];
+  db.runSync(`UPDATE exercises SET ${fields} WHERE id = ?`, values);
+};
+
+export const deleteExercise = (id: number): void => {
+  const db = getDatabase();
+  // Check if exercise is used in any workouts
+  const usageCount = db.getFirstSync<{ count: number }>(
+    'SELECT COUNT(*) as count FROM workout_exercises WHERE exercise_id = ?',
+    [id]
+  );
+  if (usageCount && usageCount.count > 0) {
+    throw new Error('Cannot delete exercise that is used in workouts');
+  }
+  db.runSync('DELETE FROM exercises WHERE id = ?', [id]);
 };
 
 // Workout Services
 export const getAllWorkouts = (userId: number): Workout[] => {
   const db = getDatabase();
   return db.getAllSync<Workout>('SELECT * FROM workouts WHERE user_id = ? ORDER BY scheduled_at DESC', [userId]);
+};
+
+export const getWorkoutsByDateRange = (userId: number, startDate: string, endDate: string): Workout[] => {
+  const db = getDatabase();
+  return db.getAllSync<Workout>(
+    'SELECT * FROM workouts WHERE user_id = ? AND scheduled_at >= ? AND scheduled_at <= ? ORDER BY scheduled_at',
+    [userId, startDate, endDate]
+  );
+};
+
+export const getWorkoutsByDate = (userId: number, date: string): Workout[] => {
+  const db = getDatabase();
+  const startOfDay = `${date}T00:00:00`;
+  const endOfDay = `${date}T23:59:59`;
+  return db.getAllSync<Workout>(
+    'SELECT * FROM workouts WHERE user_id = ? AND scheduled_at >= ? AND scheduled_at <= ? ORDER BY scheduled_at',
+    [userId, startOfDay, endOfDay]
+  );
 };
 
 export const getWorkoutById = (id: number): Workout | null => {
